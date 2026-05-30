@@ -4,7 +4,7 @@
 #--------------------------------------------
 FROM --platform=$BUILDPLATFORM node:22-alpine as dev
 
-ARG APP_SHELL_VERSION=next
+ARG APP_SHELL_VERSION=9.0.2
 
 RUN mkdir -p /app
 WORKDIR /app
@@ -13,8 +13,9 @@ COPY spa-assemble-config.json .
 COPY spa-build-config.json .
 
 ARG CACHE_BUST
-RUN npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next} assemble --manifest --mode config --config spa-assemble-config.json --target ./spa
-RUN npx --legacy-peer-deps openmrs@${APP_SHELL_VERSION:-next} build --build-config spa-build-config.json --target ./spa
+RUN npm install --legacy-peer-deps --no-save openmrs@${APP_SHELL_VERSION:-9.0.2} @react-aria/utils
+RUN npx --no-install openmrs assemble --manifest --mode config --config spa-assemble-config.json --target ./spa
+RUN npx --no-install openmrs build --build-config spa-build-config.json --target ./spa
 RUN if [ ! -f ./spa/index.html ]; then echo 'Build failed. Please check the logs above for details. This may have happened because of an update to a library that OpenMRS depends on.'; exit 1; fi
 
 #--------------------------------------------

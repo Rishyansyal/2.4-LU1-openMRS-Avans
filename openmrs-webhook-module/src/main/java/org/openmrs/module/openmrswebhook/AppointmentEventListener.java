@@ -2,23 +2,30 @@ package org.openmrs.module.openmrswebhook;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.function.Supplier;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
-import javax.jms.MessageListener;
+import org.openmrs.event.EventListener;
 
-public class AppointmentEventListener implements MessageListener {
-    private final AppointmentWebhookDispatcher dispatcher;
+public class AppointmentEventListener implements EventListener {
+    private final Supplier<AppointmentWebhookDispatcher> dispatcherSupplier;
 
     public AppointmentEventListener(AppointmentWebhookDispatcher dispatcher) {
-        this.dispatcher = dispatcher;
+        this(() -> dispatcher);
+    }
+
+    public AppointmentEventListener(Supplier<AppointmentWebhookDispatcher> dispatcherSupplier) {
+        this.dispatcherSupplier = dispatcherSupplier;
     }
 
     @Override
     public void onMessage(Message message) {
-        if (!(message instanceof MapMessage mapMessage)) {
+        if (!(message instanceof MapMessage)) {
             return;
         }
+        MapMessage mapMessage = (MapMessage) message;
+        AppointmentWebhookDispatcher dispatcher = dispatcherSupplier.get();
 
         try {
             String eventType = valueOrDefault(mapMessage, "action", "UPDATED");
@@ -32,7 +39,7 @@ public class AppointmentEventListener implements MessageListener {
                 return;
             }
 
-            var payload = new AppointmentWebhookPayload(
+            AppointmentWebhookPayload payload = new AppointmentWebhookPayload(
                 encounterId,
                 patientId,
                 start,
@@ -52,8 +59,8 @@ public class AppointmentEventListener implements MessageListener {
 
     private static String firstPresent(MapMessage message, String... keys) throws JMSException {
         for (String key : keys) {
-            var value = optional(message, key);
-            if (value != null && !value.isBlank()) {
+            String value = optional(message, key);
+            if (value != null && !value.trim().isEmpty()) {
                 return value;
             }
         }
@@ -61,8 +68,8 @@ public class AppointmentEventListener implements MessageListener {
     }
 
     private static String valueOrDefault(MapMessage message, String key, String defaultValue) throws JMSException {
-        var value = optional(message, key);
-        return value == null || value.isBlank() ? defaultValue : value;
+        String value = optional(message, key);
+        return value == null || value.trim().isEmpty() ? defaultValue : value;
     }
 
     private static String optional(MapMessage message, String key) throws JMSException {

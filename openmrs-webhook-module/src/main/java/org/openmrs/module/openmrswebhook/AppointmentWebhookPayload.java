@@ -1,15 +1,36 @@
 package org.openmrs.module.openmrswebhook;
 
-public record AppointmentWebhookPayload(
-        String encounterId,
-        String patientId,
-        String start,
-        String end,
-        String status,
-        String patientDisplay,
-        String serviceType,
-        String location,
-        String instructions) {
+public final class AppointmentWebhookPayload {
+    private final String encounterId;
+    private final String patientId;
+    private final String start;
+    private final String end;
+    private final String status;
+    private final String patientDisplay;
+    private final String serviceType;
+    private final String location;
+    private final String instructions;
+
+    public AppointmentWebhookPayload(
+            String encounterId,
+            String patientId,
+            String start,
+            String end,
+            String status,
+            String patientDisplay,
+            String serviceType,
+            String location,
+            String instructions) {
+        this.encounterId = encounterId;
+        this.patientId = patientId;
+        this.start = start;
+        this.end = end;
+        this.status = status;
+        this.patientDisplay = patientDisplay;
+        this.serviceType = serviceType;
+        this.location = location;
+        this.instructions = instructions;
+    }
 
     public String toJson() {
         return "{"
