@@ -101,6 +101,22 @@ server {
     proxy_pass $frontend;
   }
 
+  location = /openmrs {
+    return 302 /openmrs/spa/home;
+  }
+
+  location = /openmrs/ {
+    return 302 /openmrs/spa/home;
+  }
+
+  location = /openmrs/legacy {
+    return 302 /openmrs/login.htm;
+  }
+
+  location = /openmrs/legacy/ {
+    return 302 /openmrs/login.htm;
+  }
+
   location /openmrs {
     set $backend http://backend:8080;
     proxy_read_timeout 300s;

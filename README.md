@@ -16,8 +16,9 @@ is not part of this architecture.
 
 | Service | URL |
 |---|---|
-| OpenMRS O3 | `http://localhost:3032/openmrs/spa` |
-| OpenMRS legacy UI | `http://localhost:3032/openmrs` |
+| OpenMRS O3 | `http://localhost:3032/openmrs` |
+| OpenMRS O3 direct SPA route | `http://localhost:3032/openmrs/spa/home` |
+| OpenMRS legacy UI | `http://localhost:3032/openmrs/legacy` |
 | Communication backend | `http://localhost:5111` |
 | FakeComWorld providers | `http://localhost:1337` |
 
@@ -52,6 +53,14 @@ From the parent workspace on Windows, `start.bat` starts FakeComWorld, OpenMRS,
 and the communication backend together.
 
 OpenMRS takes several minutes to initialize on a fresh database.
+
+Run the O3 smoke check after startup:
+
+```powershell
+.\tests\smoke\openmrs-spa-smoke.ps1
+```
+
+If a browser still shows a white screen after this check passes, clear the browser cache and service worker for `localhost:3032` and reload. Cache cleanup is a diagnostic step; the route and asset checks above are the source of truth.
 
 ## Webhook OMOD
 
