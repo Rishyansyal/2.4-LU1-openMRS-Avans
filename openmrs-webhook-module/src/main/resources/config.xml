@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module configVersion="1.6">
+  <id>openmrswebhook</id>
+  <name>OpenMRS Appointment Webhook</name>
+  <version>${project.version}</version>
+  <package>org.openmrs.module.openmrswebhook</package>
+  <author>Avans</author>
+  <description>Posts signed OpenMRS appointment webhooks and retries failed deliveries from an outbox.</description>
+
+  <activator>org.openmrs.module.openmrswebhook.OpenmrsWebhookActivator</activator>
+  <require_version>2.8.0</require_version>
+  <require_modules>
+    <require_module version="4.0.0">event</require_module>
+  </require_modules>
+
+  <globalProperty>
+    <property>openmrswebhook.backendUrl</property>
+    <defaultValue>${OPENMRS_WEBHOOK_BACKEND_URL:http://host.docker.internal:5111/api/webhooks/openmrs/appointments}</defaultValue>
+    <description>Backend endpoint URL that receives signed OpenMRS appointment webhooks.</description>
+  </globalProperty>
+  <globalProperty>
+    <property>openmrswebhook.secret</property>
+    <defaultValue>${OPENMRS_WEBHOOK_SECRET:}</defaultValue>
+    <description>Shared HMAC secret used to sign OpenMRS webhook payloads.</description>
+  </globalProperty>
+  <globalProperty>
+    <property>openmrswebhook.organizationId</property>
+    <defaultValue>${OPENMRS_WEBHOOK_ORGANIZATION_ID:}</defaultValue>
+    <description>Organization id sent with OpenMRS webhook requests.</description>
+  </globalProperty>
+  <globalProperty>
+    <property>openmrswebhook.outboxPath</property>
+    <defaultValue>${OPENMRS_WEBHOOK_OUTBOX_PATH:/openmrs/data/openmrs-webhook-outbox.jsonl}</defaultValue>
+    <description>Filesystem path for the OpenMRS webhook retry outbox.</description>
+  </globalProperty>
+  <globalProperty>
+    <property>openmrswebhook.retryIntervalMillis</property>
+    <defaultValue>${OPENMRS_WEBHOOK_RETRY_INTERVAL_MS:300000}</defaultValue>
+    <description>Repeat interval in milliseconds for the OpenMRS webhook outbox retry task.</description>
+  </globalProperty>
+</module>

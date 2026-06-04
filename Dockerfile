@@ -9,6 +9,7 @@ ARG MVN_COMMAND="install"
 
 # Copy build files
 COPY pom.xml ./
+COPY openmrs-webhook-module ./openmrs-webhook-module/
 COPY distro ./distro/
 
 ARG CACHE_BUST

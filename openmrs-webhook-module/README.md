@@ -10,5 +10,6 @@ Runtime-configuratie gebeurt via OpenMRS global properties:
 | `openmrswebhook.secret` | Gedeeld HMAC-secret voor `X-OpenMRS-Signature` |
 | `openmrswebhook.organizationId` | Tenant-/organisatie-id die in `X-OpenMRS-Organization-Id` wordt meegestuurd |
 | `openmrswebhook.outboxPath` | Optioneel pad voor retry-outbox, standaard `openmrs-webhook-outbox.jsonl` |
+| `openmrswebhook.retryIntervalMillis` | Optioneel interval in milliseconden voor de OpenMRS Scheduler retry-taak |
 
-Het modulepakket gebruikt reflectie voor `org.openmrs.event.Event.subscribe(...)`, zodat de code testbaar blijft zonder directe compile-time dependency op de Event Module API. De LU1 distro bevat `event-omod` al.
+Het OMOD-pakket gebruikt de `event-api` als provided dependency en vereist de OpenMRS Event Module tijdens runtime. De LU1 distro bevat `event-omod` al. De global properties worden door Initializer ingeladen. `openmrswebhook.secret` en `openmrswebhook.organizationId` hebben bewust geen standaardwaarde: iedere installatie moet unieke waarden configureren.

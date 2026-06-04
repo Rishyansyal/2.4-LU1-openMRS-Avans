@@ -7,9 +7,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FileWebhookOutbox implements WebhookOutbox {
+    private static final Object FILE_LOCK = new Object();
+
     private final Path path;
 
     public FileWebhookOutbox(Path path) {
@@ -17,30 +21,39 @@ public class FileWebhookOutbox implements WebhookOutbox {
     }
 
     @Override
-    public synchronized void enqueue(WebhookOutboxEntry entry) {
-        try {
-            Files.createDirectories(path.toAbsolutePath().getParent());
-            Files.writeString(
-                path,
-                entry.encode() + System.lineSeparator(),
-                StandardCharsets.UTF_8,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.APPEND);
-        } catch (IOException ex) {
-            throw new IllegalStateException("Could not persist OpenMRS webhook outbox entry.", ex);
+    public void enqueue(WebhookOutboxEntry entry) {
+        synchronized (FILE_LOCK) {
+            try {
+                Files.createDirectories(path.toAbsolutePath().getParent());
+                Files.write(
+                    path,
+                    (entry.encode() + System.lineSeparator()).getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND);
+            } catch (IOException ex) {
+                throw new IllegalStateException("Could not persist OpenMRS webhook outbox entry.", ex);
+            }
         }
     }
 
     @Override
-    public synchronized List<WebhookOutboxEntry> readAll() {
+    public List<WebhookOutboxEntry> readAll() {
+        synchronized (FILE_LOCK) {
+            return readAllUnlocked();
+        }
+    }
+
+    private List<WebhookOutboxEntry> readAllUnlocked() {
         if (!Files.exists(path)) {
-            return List.of();
+            return Collections.emptyList();
         }
 
         try {
-            var entries = new ArrayList<WebhookOutboxEntry>();
+            List<WebhookOutboxEntry> entries = new ArrayList<WebhookOutboxEntry>();
             for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
-                if (!line.isBlank()) entries.add(WebhookOutboxEntry.decode(line));
+                if (!line.trim().isEmpty()) {
+                    entries.add(WebhookOutboxEntry.decode(line));
+                }
             }
             return entries;
         } catch (IOException ex) {
@@ -49,10 +62,32 @@ public class FileWebhookOutbox implements WebhookOutbox {
     }
 
     @Override
-    public synchronized void replaceAll(List<WebhookOutboxEntry> entries) {
+    public void replaceAll(List<WebhookOutboxEntry> entries) {
+        synchronized (FILE_LOCK) {
+            replaceAllUnlocked(entries);
+        }
+    }
+
+    @Override
+    public void replaceAllPreservingNewEntries(
+            List<WebhookOutboxEntry> readEntries,
+            List<WebhookOutboxEntry> replacementEntries) {
+        synchronized (FILE_LOCK) {
+            List<WebhookOutboxEntry> mergedEntries = new ArrayList<WebhookOutboxEntry>(replacementEntries);
+            List<WebhookOutboxEntry> unmatchedReadEntries = new ArrayList<WebhookOutboxEntry>(readEntries);
+            for (WebhookOutboxEntry currentEntry : readAllUnlocked()) {
+                if (!unmatchedReadEntries.remove(currentEntry)) {
+                    mergedEntries.add(currentEntry);
+                }
+            }
+            replaceAllUnlocked(mergedEntries);
+        }
+    }
+
+    private void replaceAllUnlocked(List<WebhookOutboxEntry> entries) {
         try {
             Files.createDirectories(path.toAbsolutePath().getParent());
-            var lines = entries.stream().map(WebhookOutboxEntry::encode).toList();
+            List<String> lines = entries.stream().map(WebhookOutboxEntry::encode).collect(Collectors.toList());
             Files.write(path, lines, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException ex) {
             throw new IllegalStateException("Could not rewrite OpenMRS webhook outbox.", ex);
