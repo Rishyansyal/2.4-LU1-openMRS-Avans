@@ -14,3 +14,6 @@ CLAUDE.md
 .aider*
 .clinerules
 
+
+# Tweede OpenMRS-instantie env met secret — nooit committen
+.env.openmrs2

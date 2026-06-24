@@ -1,0 +1,4 @@
+services:
+  gateway:
+    ports: !override
+      - "3042:80"
